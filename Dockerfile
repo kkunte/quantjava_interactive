@@ -3,9 +3,13 @@ FROM eclipse-temurin:21-jdk-jammy
 RUN apt-get update
 RUN apt-get install -y python3-pip unzip
 
+COPY lib/qjava.tar.gz .
+RUN tar xzf qjava.tar.gz 
+RUN ls -ltr
+
 # add requirements.txt, written this way to gracefully ignore a missing file
 #COPY requirements.tx[t] .
-pip3 install --no-cache-dir jupyter jupyterlab
+RUN pip3 install --no-cache-dir jupyter jupyterlab
 
 USER root
 
@@ -28,11 +32,23 @@ RUN adduser --disabled-password \
     --uid $NB_UID \
     $NB_USER
 
+
+
+RUN ls -ltr .
 COPY . $HOME
+#RUN cp *.jar $HOME
+#RUN cp libQuantLibJNI.so  $HOME
+RUN tar xzf qjava.tar.gz -C $HOME
+RUN mv  $HOME/libQuantLib.so.0.0.0  $HOME/libQuantLib.so.0
 RUN chown -R $NB_UID $HOME
 
 USER $NB_USER
 
-# Launch the notebook server
+ENV LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:$HOME
+ENV PATH=${PATH}:$HOME:.
+
+#Launch the notebook server
 WORKDIR $HOME
+RUN ls -ltr $HOME
+
 CMD ["jupyter", "notebook", "--ip", "0.0.0.0", "--no-browser"]
